@@ -141,6 +141,21 @@ def update_movers_count(collection_id):
     return redirect(url_for("view_collection", collection_id=collection_id))
 
 
+@app.route("/collections/<int:collection_id>/cards/<entry_id>")
+@login_required
+def card_history(collection_id, entry_id):
+    collection = _owned_collection_or_404(collection_id)
+    history = db.get_card_price_history(collection_id, entry_id)
+    if not history:
+        abort(404)
+    return render_template(
+        "card_history.html",
+        collection=collection,
+        card=history[-1],
+        history=history,
+    )
+
+
 @app.route("/collections/<int:collection_id>/refresh", methods=["POST"])
 @login_required
 def refresh_collection(collection_id):

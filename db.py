@@ -167,6 +167,25 @@ def save_snapshot(collection_id, items, fetched_at):
         return snapshot_id
 
 
+def get_card_price_history(collection_id, entry_id):
+    with get_connection() as conn:
+        rows = conn.execute(
+            """
+            SELECT s.fetched_at, i.name, i.set_name, i.collector_number, i.finish,
+                   i.quantity, i.unit_price_usd
+            FROM snapshot_items i
+            JOIN snapshots s ON s.id = i.snapshot_id
+            WHERE s.collection_id = %s AND i.entry_id = %s
+            ORDER BY s.fetched_at ASC
+            """,
+            (collection_id, entry_id),
+        ).fetchall()
+        for row in rows:
+            if row["unit_price_usd"] is not None:
+                row["unit_price_usd"] = float(row["unit_price_usd"])
+        return rows
+
+
 def get_value_history(collection_id):
     with get_connection() as conn:
         rows = conn.execute(
@@ -212,6 +231,7 @@ def _diff_snapshots(latest_id, previous_id):
                 new.entry_id,
                 new.name,
                 new.set_name,
+                new.collector_number,
                 new.finish,
                 new.quantity AS quantity,
                 old.unit_price_usd AS old_price,

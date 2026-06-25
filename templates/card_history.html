@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}{{ card.name }} - Materia Markets{% endblock %}
+{% block content %}
+<style>
+    .chart-wrap { background: #1a1d24; border-radius: 10px; padding: 1rem; margin-bottom: 1.5rem; }
+    .chart-container { position: relative; width: 100%; height: 320px; }
+    .chart-container canvas { width: 100% !important; height: 100% !important; }
+    .summary { display: flex; gap: 2rem; margin-bottom: 1.5rem; align-items: flex-end; }
+    .summary .value { font-size: 2rem; font-weight: 600; }
+    .summary .label { color: #9aa0a6; font-size: 0.85rem; }
+</style>
+
+<p><a href="{{ url_for('view_collection', collection_id=collection.id) }}">&larr; Back to {{ collection.label }}</a></p>
+
+<h2 style="margin-bottom:0;">{{ card.name }}</h2>
+<p class="subtitle">{{ card.set_name }} #{{ card.collector_number }} &middot; {{ card.finish }} &middot; qty {{ card.quantity }}</p>
+
+<div class="summary">
+    <div>
+        <div class="value">${{ "%.2f"|format(card.unit_price_usd) if card.unit_price_usd is not none else "—" }}</div>
+        <div class="label">Current price (USD)</div>
+    </div>
+    <div>
+        <div class="value">{{ history|length }}</div>
+        <div class="label">Snapshots recorded</div>
+    </div>
+</div>
+
+<div class="chart-wrap">
+    <div class="chart-container">
+        <canvas id="priceChart"></canvas>
+    </div>
+</div>
+
+<table>
+    <tr><th>Date</th><th>Price</th></tr>
+    {% for h in history|reverse %}
+    <tr>
+        <td>{{ h.fetched_at.strftime('%b %d, %Y %H:%M UTC') }}</td>
+        <td>{{ "$%.2f"|format(h.unit_price_usd) if h.unit_price_usd is not none else "—" }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const history = {{ history|tojson }};
+    const ctx = document.getElementById('priceChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: history.map(h => new Date(h.fetched_at).toLocaleString()),
+            datasets: [{
+                label: 'Price (USD)',
+                data: history.map(h => h.unit_price_usd),
+                borderColor: '#c084fc',
+                backgroundColor: 'rgba(192,132,252,0.15)',
+                tension: 0.25,
+                fill: true,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                x: { ticks: { color: '#9aa0a6' }, grid: { color: '#22262f' } },
+                y: { ticks: { color: '#9aa0a6' }, grid: { color: '#22262f' } }
+            },
+            plugins: { legend: { labels: { color: '#e6e6e6' } } }
+        }
+    });
+</script>
+{% endblock %}

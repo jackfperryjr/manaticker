@@ -36,8 +36,15 @@ def _unit_price(card, finish):
 
 
 def fetch_collection(collection_id):
-    """Fetch every entry in a public Moxfield collection, paginating as needed."""
-    items = []
+    """Fetch every entry in a public Moxfield collection, paginating as needed.
+
+    Moxfield's pagination order can drift slightly between page requests for
+    larger collections, which occasionally duplicates one entry across two
+    pages while silently dropping another. Deduplicating by entry id (first
+    occurrence wins) prevents a duplicate from double-counting a card's value
+    in this snapshot; the rare dropped entry just reappears on the next fetch.
+    """
+    items = {}
     page = 1
     while True:
         resp = requests.get(
@@ -50,26 +57,27 @@ def fetch_collection(collection_id):
         payload = resp.json()
 
         for entry in payload["data"]:
+            entry_id = entry["id"]
+            if entry_id in items:
+                continue
             card = entry["card"]
             finish = entry["finish"]
             quantity = entry["quantity"]
             unit_price = _unit_price(card, finish)
-            items.append(
-                {
-                    "entry_id": entry["id"],
-                    "name": card["name"],
-                    "set_code": card["set"],
-                    "set_name": card["set_name"],
-                    "collector_number": card["cn"],
-                    "finish": finish,
-                    "quantity": quantity,
-                    "unit_price_usd": unit_price,
-                    "scryfall_id": card.get("scryfall_id"),
-                }
-            )
+            items[entry_id] = {
+                "entry_id": entry_id,
+                "name": card["name"],
+                "set_code": card["set"],
+                "set_name": card["set_name"],
+                "collector_number": card["cn"],
+                "finish": finish,
+                "quantity": quantity,
+                "unit_price_usd": unit_price,
+                "scryfall_id": card.get("scryfall_id"),
+            }
 
         if page >= payload["totalPages"]:
             break
         page += 1
 
-    return items
+    return list(items.values())
