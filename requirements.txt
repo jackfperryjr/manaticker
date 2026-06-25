@@ -1,0 +1,7 @@
+flask
+requests
+psycopg[binary]
+flask-login
+flask-wtf
+python-dotenv
+gunicorn

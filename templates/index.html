@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}{{ collection.label }} - Collection Tracker{% endblock %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+    .summary { display: flex; gap: 2rem; margin-bottom: 1.5rem; align-items: flex-end; }
+    .summary .value { font-size: 2rem; font-weight: 600; }
+    .summary .label { color: #9aa0a6; font-size: 0.85rem; }
+    .chart-wrap { background: #1a1d24; border-radius: 10px; padding: 1rem; margin-bottom: 2rem; }
+    .movers { display: flex; gap: 2rem; flex-wrap: wrap; }
+    .gain { color: #4ade80; }
+    .loss { color: #f87171; }
+    .panel { flex: 1; min-width: 320px; }
+    .panel h2 { font-size: 1rem; margin-bottom: 0.5rem; }
+    .empty { color: #9aa0a6; font-style: italic; }
+    .controls { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+    .controls select { margin-bottom: 0; width: auto; }
+</style>
+
+<div class="controls">
+    <h2 style="margin:0;">{{ collection.label }}</h2>
+    {% if other_collections %}
+    <select onchange="window.location = this.value;">
+        <option value="{{ url_for('view_collection', collection_id=collection.id) }}" selected>{{ collection.label }}</option>
+        {% for c in other_collections %}
+        <option value="{{ url_for('view_collection', collection_id=c.id) }}">{{ c.label }}</option>
+        {% endfor %}
+    </select>
+    {% endif %}
+</div>
+
+<div class="summary">
+    <div>
+        <div class="value">${{ "%.2f"|format(summary.total_usd) if summary else "—" }}</div>
+        <div class="label">Current total value (USD)</div>
+    </div>
+    <div>
+        <div class="value">{{ history|length }}</div>
+        <div class="label">Snapshots recorded</div>
+    </div>
+    <form action="{{ url_for('refresh_collection', collection_id=collection.id) }}" method="post">
+        {% include "_csrf.html" %}
+        <button type="submit">Refresh now</button>
+    </form>
+    <form method="get">
+        <label style="margin:0;display:inline;">Top</label>
+        <select name="movers" onchange="this.form.submit()" style="width:auto;display:inline;">
+            {% for n in [5, 10, 20, 50] %}
+            <option value="{{ n }}" {% if n == movers_count %}selected{% endif %}>{{ n }}</option>
+            {% endfor %}
+        </select>
+    </form>
+</div>
+
+<div class="chart-wrap">
+    <canvas id="valueChart" height="80"></canvas>
+</div>
+
+<div class="movers">
+    <div class="panel">
+        <h2>Top {{ movers_count }} Gainers</h2>
+        {% if not movers.ready %}
+            <p class="empty">Need at least two snapshots to compute movers. Click "Refresh now" again after prices update.</p>
+        {% elif not movers.gainers %}
+            <p class="empty">No price increases since the last snapshot.</p>
+        {% else %}
+        <table>
+            <tr><th>Card</th><th>Set</th><th>Finish</th><th>Qty</th><th>Old</th><th>New</th><th>Change</th></tr>
+            {% for m in movers.gainers %}
+            <tr>
+                <td>{{ m.name }}</td>
+                <td>{{ m.set_name }}</td>
+                <td>{{ m.finish }}</td>
+                <td>{{ m.quantity }}</td>
+                <td>${{ "%.2f"|format(m.old_price) }}</td>
+                <td>${{ "%.2f"|format(m.new_price) }}</td>
+                <td class="gain">+${{ "%.2f"|format(m.value_change) }} ({{ "%.1f"|format(m.pct_change) }}%)</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+
+    <div class="panel">
+        <h2>Top {{ movers_count }} Losers</h2>
+        {% if not movers.ready %}
+            <p class="empty">Need at least two snapshots to compute movers. Click "Refresh now" again after prices update.</p>
+        {% elif not movers.losers %}
+            <p class="empty">No price decreases since the last snapshot.</p>
+        {% else %}
+        <table>
+            <tr><th>Card</th><th>Set</th><th>Finish</th><th>Qty</th><th>Old</th><th>New</th><th>Change</th></tr>
+            {% for m in movers.losers %}
+            <tr>
+                <td>{{ m.name }}</td>
+                <td>{{ m.set_name }}</td>
+                <td>{{ m.finish }}</td>
+                <td>{{ m.quantity }}</td>
+                <td>${{ "%.2f"|format(m.old_price) }}</td>
+                <td>${{ "%.2f"|format(m.new_price) }}</td>
+                <td class="loss">-${{ "%.2f"|format(-m.value_change) }} ({{ "%.1f"|format(m.pct_change) }}%)</td>
+            </tr>
+            {% endfor %}
+        </table>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    const history = {{ history|tojson }};
+    const ctx = document.getElementById('valueChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: history.map(h => new Date(h.fetched_at).toLocaleString()),
+            datasets: [{
+                label: 'Total value (USD)',
+                data: history.map(h => h.total_usd),
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.15)',
+                tension: 0.25,
+                fill: true,
+            }]
+        },
+        options: {
+            scales: {
+                x: { ticks: { color: '#9aa0a6' }, grid: { color: '#22262f' } },
+                y: { ticks: { color: '#9aa0a6' }, grid: { color: '#22262f' } }
+            },
+            plugins: { legend: { labels: { color: '#e6e6e6' } } }
+        }
+    });
+</script>
+{% endblock %}

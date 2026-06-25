@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<h2>Settings</h2>
+
+<div class="card">
+    <h3 style="margin-top:0;">Default top movers count</h3>
+    <form method="post">
+        {% include "_csrf.html" %}
+        <label>Show this many gainers/losers by default</label>
+        <input type="number" name="movers_count" min="1" max="50" value="{{ current_user.movers_count }}">
+        <button type="submit">Save</button>
+    </form>
+</div>
+
+<h3>Your collections</h3>
+<table>
+    <tr><th>Label</th><th></th></tr>
+    {% for c in collections %}
+    <tr>
+        <td><a href="{{ url_for('view_collection', collection_id=c.id) }}">{{ c.label }}</a></td>
+        <td>
+            <form class="inline" action="{{ url_for('delete_collection', collection_id=c.id) }}" method="post"
+                  onsubmit="return confirm('Delete this collection and all of its snapshot history?');">
+                {% include "_csrf.html" %}
+                <button type="submit" class="btn-danger">Delete</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<p style="margin-top:1.5rem;"><a href="{{ url_for('new_collection') }}" class="btn">+ Add another collection</a></p>
+{% endblock %}

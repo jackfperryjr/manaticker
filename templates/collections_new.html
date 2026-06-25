@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Add a collection{% endblock %}
+{% block content %}
+<div class="card">
+    <h2>Add a Moxfield collection</h2>
+    <p class="subtitle">Paste the public link to your Moxfield collection. It must be set to public in Moxfield's privacy settings.</p>
+    <form method="post">
+        {% include "_csrf.html" %}
+        <label>Moxfield collection link</label>
+        <input type="text" name="moxfield_link" placeholder="https://moxfield.com/collection/..." required>
+        <label>Label (optional)</label>
+        <input type="text" name="label" placeholder="e.g. Final Fantasy">
+        <button type="submit">Add collection</button>
+    </form>
+</div>
+{% endblock %}
