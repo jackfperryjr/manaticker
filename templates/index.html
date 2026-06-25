@@ -42,9 +42,10 @@
         {% include "_csrf.html" %}
         <button type="submit">Refresh now</button>
     </form>
-    <form method="get">
+    <form action="{{ url_for('update_movers_count', collection_id=collection.id) }}" method="post">
+        {% include "_csrf.html" %}
         <label style="margin:0;display:inline;">Top</label>
-        <select name="movers" onchange="this.form.submit()" style="width:auto;display:inline;">
+        <select name="movers_count" onchange="this.form.submit()" style="width:auto;display:inline;">
             {% for n in [5, 10, 20, 50] %}
             <option value="{{ n }}" {% if n == movers_count %}selected{% endif %}>{{ n }}</option>
             {% endfor %}

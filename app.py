@@ -114,8 +114,7 @@ def new_collection():
 @login_required
 def view_collection(collection_id):
     collection = _owned_collection_or_404(collection_id)
-    movers_count = request.args.get("movers", type=int, default=current_user.movers_count)
-    movers_count = max(1, min(movers_count, 50))
+    movers_count = collection["movers_count"]
 
     other_collections = [
         c for c in db.get_collections_for_user(int(current_user.id)) if c["id"] != collection_id
@@ -130,6 +129,15 @@ def view_collection(collection_id):
         movers=db.get_movers(collection_id, limit=movers_count),
         movers_count=movers_count,
     )
+
+
+@app.route("/collections/<int:collection_id>/movers_count", methods=["POST"])
+@login_required
+def update_movers_count(collection_id):
+    _owned_collection_or_404(collection_id)
+    movers_count = max(1, min(request.form.get("movers_count", type=int, default=10), 50))
+    db.update_collection_movers_count(collection_id, movers_count)
+    return redirect(url_for("view_collection", collection_id=collection_id))
 
 
 @app.route("/collections/<int:collection_id>/refresh", methods=["POST"])
@@ -160,13 +168,9 @@ def rename_collection(collection_id):
     return redirect(url_for("settings"))
 
 
-@app.route("/settings", methods=["GET", "POST"])
+@app.route("/settings")
 @login_required
 def settings():
-    if request.method == "POST":
-        movers_count = max(1, min(request.form.get("movers_count", type=int, default=10), 50))
-        db.update_movers_count(int(current_user.id), movers_count)
-        flash("Settings saved.")
     collections = db.get_collections_for_user(int(current_user.id))
     return render_template("settings.html", collections=collections)
 

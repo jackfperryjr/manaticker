@@ -8,7 +8,6 @@ class User(UserMixin):
     def __init__(self, row):
         self.id = str(row["id"])
         self.email = row["email"]
-        self.movers_count = row["movers_count"]
 
 
 def load_user(user_id):

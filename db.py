@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    movers_count INT NOT NULL DEFAULT 10,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -17,8 +16,12 @@ CREATE TABLE IF NOT EXISTS collections (
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     moxfield_collection_id TEXT NOT NULL,
     label TEXT NOT NULL,
+    movers_count INT NOT NULL DEFAULT 10,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+ALTER TABLE collections ADD COLUMN IF NOT EXISTS movers_count INT NOT NULL DEFAULT 10;
+ALTER TABLE users DROP COLUMN IF EXISTS movers_count;
 
 CREATE TABLE IF NOT EXISTS snapshots (
     id SERIAL PRIMARY KEY,
@@ -77,13 +80,6 @@ def get_user_by_id(user_id):
         return conn.execute("SELECT * FROM users WHERE id = %s", (user_id,)).fetchone()
 
 
-def update_movers_count(user_id, movers_count):
-    with get_connection() as conn:
-        conn.execute(
-            "UPDATE users SET movers_count = %s WHERE id = %s", (movers_count, user_id)
-        )
-
-
 # --- collections -------------------------------------------------------------
 
 def create_collection(user_id, moxfield_collection_id, label):
@@ -120,6 +116,14 @@ def get_all_collections():
 def rename_collection(collection_id, label):
     with get_connection() as conn:
         conn.execute("UPDATE collections SET label = %s WHERE id = %s", (label, collection_id))
+
+
+def update_collection_movers_count(collection_id, movers_count):
+    with get_connection() as conn:
+        conn.execute(
+            "UPDATE collections SET movers_count = %s WHERE id = %s",
+            (movers_count, collection_id),
+        )
 
 
 def delete_collection(collection_id):

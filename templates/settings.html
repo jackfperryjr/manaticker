@@ -3,35 +3,25 @@
 {% block content %}
 <h2>Settings</h2>
 
-<div class="card">
-    <h3 style="margin-top:0;">Default top movers count</h3>
-    <form method="post">
-        {% include "_csrf.html" %}
-        <label>Show this many gainers/losers by default</label>
-        <input type="number" name="movers_count" min="1" max="50" value="{{ current_user.movers_count }}">
-        <button type="submit">Save</button>
-    </form>
-</div>
-
 <h3>Your collections</h3>
 <table>
-    <tr><th>Label</th><th>Rename</th><th></th></tr>
+    <tr><th>Label</th><th></th></tr>
     {% for c in collections %}
     <tr>
         <td><a href="{{ url_for('view_collection', collection_id=c.id) }}">{{ c.label }}</a></td>
         <td>
-            <form class="inline" action="{{ url_for('rename_collection', collection_id=c.id) }}" method="post" style="display:flex;gap:0.5rem;align-items:center;">
-                {% include "_csrf.html" %}
-                <input type="text" name="label" value="{{ c.label }}" style="margin-bottom:0;width:160px;" required>
-                <button type="submit">Save</button>
-            </form>
-        </td>
-        <td>
-            <form class="inline" action="{{ url_for('delete_collection', collection_id=c.id) }}" method="post"
-                  onsubmit="return confirm('Delete this collection and all of its snapshot history?');">
-                {% include "_csrf.html" %}
-                <button type="submit" class="btn-danger">Delete</button>
-            </form>
+            <div style="display:flex;gap:0.5rem;align-items:center;">
+                <form class="inline" action="{{ url_for('rename_collection', collection_id=c.id) }}" method="post" style="display:flex;gap:0.5rem;align-items:center;">
+                    {% include "_csrf.html" %}
+                    <input type="text" name="label" value="{{ c.label }}" style="margin-bottom:0;width:160px;" required>
+                    <button type="submit">Save</button>
+                </form>
+                <form class="inline" action="{{ url_for('delete_collection', collection_id=c.id) }}" method="post"
+                      onsubmit="return confirm('Delete this collection and all of its snapshot history?');">
+                    {% include "_csrf.html" %}
+                    <button type="submit" class="btn-danger">Delete</button>
+                </form>
+            </div>
         </td>
     </tr>
     {% endfor %}
