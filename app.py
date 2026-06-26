@@ -20,6 +20,7 @@ from moxfield import parse_collection_id
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
 app.config["SESSION_COOKIE_SECURE"] = IS_PRODUCTION
+app.config["WTF_CSRF_TIME_LIMIT"] = None
 CSRFProtect(app)
 
 login_manager = LoginManager(app)
