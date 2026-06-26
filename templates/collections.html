@@ -1,16 +1,16 @@
 {% extends "base.html" %}
-{% block title %}Settings - Materia Markets{% endblock %}
+{% block title %}Collections - Materia Markets{% endblock %}
 {% block content %}
-<h2>Settings</h2>
-
-<h3>Your collections</h3>
+<h2>Your collections</h2>
 <table>
-    <tr><th>Label</th><th></th></tr>
+    <tr><th>Label</th><th>Type</th><th></th></tr>
     {% for c in collections %}
     <tr>
         <td><a href="{{ url_for('view_collection', collection_id=c.id) }}">{{ c.label }}</a></td>
+        <td>{{ "Binder" if c.kind == "binder" else "Collection" }}</td>
         <td>
             <div style="display:flex;gap:0.5rem;align-items:center;">
+                <a href="{{ url_for('view_collection', collection_id=c.id) }}" class="btn">View</a>
                 <form class="inline" action="{{ url_for('rename_collection', collection_id=c.id) }}" method="post" style="display:flex;gap:0.5rem;align-items:center;">
                     {% include "_csrf.html" %}
                     <input type="text" name="label" value="{{ c.label }}" style="margin-bottom:0;width:160px;" required>

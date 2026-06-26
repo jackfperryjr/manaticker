@@ -76,8 +76,7 @@
         {% if current_user.is_authenticated %}
         <nav>
             <span>{{ current_user.email }}</span>
-            <a href="{{ url_for('index') }}">Collections</a>
-            <a href="{{ url_for('settings') }}">Settings</a>
+            <a href="{{ url_for('manage_collections') }}">Collections</a>
             <form class="inline" action="{{ url_for('logout') }}" method="post">
                 {% include "_csrf.html" %}
                 <button type="submit">Log out</button>

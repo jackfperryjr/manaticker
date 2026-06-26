@@ -2,20 +2,32 @@ import re
 
 import requests
 
-API_BASE = "https://api2.moxfield.com/v1/collections"
+API_BASES = {
+    "collection": "https://api2.moxfield.com/v1/collections",
+    "binder": "https://api2.moxfield.com/v1/trade-binders",
+}
 
 COLLECTION_URL_RE = re.compile(r"moxfield\.com/collection/([A-Za-z0-9_-]+)", re.IGNORECASE)
+BINDER_URL_RE = re.compile(r"moxfield\.com/binders/([A-Za-z0-9_-]+)", re.IGNORECASE)
 
 
-def parse_collection_id(value):
-    """Accept either a bare collection id or a full Moxfield collection URL."""
+def parse_moxfield_link(value):
+    """Accept a Moxfield collection or trade binder URL, or a bare id.
+
+    Returns (kind, id) where kind is "collection" or "binder". A bare id
+    (no recognizable URL) is assumed to be a collection, matching prior
+    behavior before binder support was added.
+    """
     value = value.strip()
     match = COLLECTION_URL_RE.search(value)
     if match:
-        return match.group(1)
+        return "collection", match.group(1)
+    match = BINDER_URL_RE.search(value)
+    if match:
+        return "binder", match.group(1)
     if re.fullmatch(r"[A-Za-z0-9_-]+", value):
-        return value
-    raise ValueError("Not a valid Moxfield collection link or id")
+        return "collection", value
+    raise ValueError("Not a valid Moxfield collection or binder link")
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
@@ -35,20 +47,21 @@ def _unit_price(card, finish):
     return prices.get("usd")
 
 
-def fetch_collection(collection_id):
-    """Fetch every entry in a public Moxfield collection, paginating as needed.
+def fetch_items(kind, resource_id):
+    """Fetch every entry in a public Moxfield collection or trade binder, paginating as needed.
 
     Moxfield's pagination order can drift slightly between page requests for
-    larger collections, which occasionally duplicates one entry across two
-    pages while silently dropping another. Deduplicating by entry id (first
+    larger collections/binders, which occasionally duplicates one entry across
+    two pages while silently dropping another. Deduplicating by entry id (first
     occurrence wins) prevents a duplicate from double-counting a card's value
     in this snapshot; the rare dropped entry just reappears on the next fetch.
     """
+    api_base = API_BASES[kind]
     items = {}
     page = 1
     while True:
         resp = requests.get(
-            f"{API_BASE}/{collection_id}",
+            f"{api_base}/{resource_id}",
             headers=HEADERS,
             params={"pageNumber": page, "pageSize": PAGE_SIZE},
             timeout=30,

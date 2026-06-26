@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS collections (
 );
 
 ALTER TABLE collections ADD COLUMN IF NOT EXISTS movers_count INT NOT NULL DEFAULT 10;
+ALTER TABLE collections ADD COLUMN IF NOT EXISTS kind TEXT NOT NULL DEFAULT 'collection';
 ALTER TABLE users DROP COLUMN IF EXISTS movers_count;
 
 CREATE TABLE IF NOT EXISTS snapshots (
@@ -82,14 +83,14 @@ def get_user_by_id(user_id):
 
 # --- collections -------------------------------------------------------------
 
-def create_collection(user_id, moxfield_collection_id, label):
+def create_collection(user_id, moxfield_collection_id, label, kind="collection"):
     with get_connection() as conn:
         row = conn.execute(
             """
-            INSERT INTO collections (user_id, moxfield_collection_id, label)
-            VALUES (%s, %s, %s) RETURNING *
+            INSERT INTO collections (user_id, moxfield_collection_id, label, kind)
+            VALUES (%s, %s, %s, %s) RETURNING *
             """,
-            (user_id, moxfield_collection_id, label),
+            (user_id, moxfield_collection_id, label, kind),
         ).fetchone()
         return row
 

@@ -18,19 +18,11 @@
     .panel h2 { font-size: 1rem; margin-bottom: 0.5rem; }
     .empty { color: #9aa0a6; font-style: italic; }
     .controls { display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
-    .controls select { margin-bottom: 0; width: auto; }
 </style>
 
 <div class="controls">
     <h2 style="margin:0;">{{ collection.label }}</h2>
-    {% if other_collections %}
-    <select onchange="window.location = this.value;">
-        <option value="{{ url_for('view_collection', collection_id=collection.id) }}" selected>{{ collection.label }}</option>
-        {% for c in other_collections %}
-        <option value="{{ url_for('view_collection', collection_id=c.id) }}">{{ c.label }}</option>
-        {% endfor %}
-    </select>
-    {% endif %}
+    <span class="subtitle" style="margin:0;">{{ "Binder" if collection.kind == "binder" else "Collection" }}</span>
 </div>
 
 <div class="summary">

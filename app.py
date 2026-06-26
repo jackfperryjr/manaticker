@@ -15,7 +15,7 @@ import db
 from auth import authenticate, load_user, signup
 from config import IS_PRODUCTION, SECRET_KEY
 from fetch import fetch_for_collection
-from moxfield import parse_collection_id
+from moxfield import parse_moxfield_link
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -82,9 +82,8 @@ def index():
     collections = db.get_collections_for_user(int(current_user.id))
     if not collections:
         return redirect(url_for("new_collection"))
-    if len(collections) == 1:
-        return redirect(url_for("view_collection", collection_id=collections[0]["id"]))
-    return render_template("collections_picker.html", collections=collections)
+    default = next((c for c in collections if c["kind"] == "collection"), collections[0])
+    return redirect(url_for("view_collection", collection_id=default["id"]))
 
 
 def _owned_collection_or_404(collection_id):
@@ -101,12 +100,12 @@ def new_collection():
         link = request.form["moxfield_link"].strip()
         label = request.form.get("label", "").strip() or "My Collection"
         try:
-            moxfield_collection_id = parse_collection_id(link)
+            kind, moxfield_collection_id = parse_moxfield_link(link)
         except ValueError as exc:
             flash(str(exc))
             return render_template("collections_new.html")
 
-        collection = db.create_collection(int(current_user.id), moxfield_collection_id, label)
+        collection = db.create_collection(int(current_user.id), moxfield_collection_id, label, kind)
         try:
             fetch_for_collection(collection["id"])
         except Exception:
@@ -121,10 +120,6 @@ def view_collection(collection_id):
     collection = _owned_collection_or_404(collection_id)
     movers_count = collection["movers_count"]
 
-    other_collections = [
-        c for c in db.get_collections_for_user(int(current_user.id)) if c["id"] != collection_id
-    ]
-
     history = db.get_value_history(collection_id)
     overall_change = overall_pct = None
     if len(history) >= 2 and history[0]["total_usd"]:
@@ -134,7 +129,6 @@ def view_collection(collection_id):
     return render_template(
         "index.html",
         collection=collection,
-        other_collections=other_collections,
         history=history,
         summary=db.get_latest_summary(collection_id),
         overall_change=overall_change,
@@ -232,14 +226,14 @@ def rename_collection(collection_id):
         flash("Label can't be empty.")
     else:
         db.rename_collection(collection_id, label)
-    return redirect(url_for("settings"))
+    return redirect(url_for("manage_collections"))
 
 
-@app.route("/settings")
+@app.route("/collections")
 @login_required
-def settings():
+def manage_collections():
     collections = db.get_collections_for_user(int(current_user.id))
-    return render_template("settings.html", collections=collections)
+    return render_template("collections.html", collections=collections)
 
 
 if __name__ == "__main__":

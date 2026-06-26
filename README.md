@@ -1,15 +1,16 @@
 # MTG Collection Tracker
 
-Tracks the market value of one or more Moxfield collections over time and
-surfaces the biggest price movers, similar to a stock portfolio tracker.
-Supports multiple user accounts, each with their own collections.
+Tracks the market value of one or more Moxfield collections or trade binders
+over time and surfaces the biggest price movers, similar to a stock portfolio
+tracker. Supports multiple user accounts, each with their own collections.
 
 ## How it works
 
-- `moxfield.py` pulls every card from a **public** Moxfield collection via
-  Moxfield's collection API (`https://moxfield.com/collection/<id>`). Each
-  collection must be set to public in Moxfield's privacy settings or the
-  fetch will fail.
+- `moxfield.py` pulls every card from a **public** Moxfield collection
+  (`https://moxfield.com/collection/<id>`) or trade binder
+  (`https://moxfield.com/binders/<id>`) via Moxfield's respective APIs. Each
+  collection/binder must be set to public in Moxfield's privacy settings or
+  the fetch will fail.
 - Each fetch is stored as a timestamped "snapshot" in Postgres — one row per
   card, including its current unit price, scoped to the collection it
   belongs to.
@@ -19,9 +20,9 @@ Supports multiple user accounts, each with their own collections.
 - Movers require **at least two snapshots** to exist for a collection; the
   first fetch will show an empty state until a second snapshot is taken.
 - Accounts: sign up with email/password, then add one or more Moxfield
-  collection links. There's no per-account collection limit yet, but the
-  schema and routes are built so a future paid-tier limit is a small check,
-  not a migration.
+  collection or binder links. There's no per-account collection limit yet,
+  but the schema and routes are built so a future paid-tier limit is a small
+  check, not a migration.
 
 ## Local setup
 
@@ -48,8 +49,8 @@ venv\Scripts\python run_fetch.py   # creates tables, fetches nothing yet (no col
 venv\Scripts\python app.py         # serve the dashboard at http://127.0.0.1:5000
 ```
 
-Sign up, add a Moxfield collection link, and click **Refresh now** on the
-dashboard whenever you want a new snapshot.
+Sign up, add a Moxfield collection or binder link, and click **Refresh now**
+on the dashboard whenever you want a new snapshot.
 
 ## Getting a Postgres connection string from Railway
 

@@ -1,12 +1,12 @@
 from datetime import datetime, timezone
 
 import db
-from moxfield import fetch_collection
+from moxfield import fetch_items
 
 
 def fetch_for_collection(collection_id):
     collection = db.get_collection(collection_id)
-    items = fetch_collection(collection["moxfield_collection_id"])
+    items = fetch_items(collection["kind"], collection["moxfield_collection_id"])
     return db.save_snapshot(collection_id, items, datetime.now(timezone.utc))
 
 
