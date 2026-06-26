@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="manaticker-grad" gradientUnits="userSpaceOnUse" x1="22" y1="50" x2="92" y2="50">
+      <stop offset="0%" stop-color="#4ade80"/>
+      <stop offset="50%" stop-color="#60a5fa"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+  </defs>
+  <circle cx="50" cy="50" r="46" fill="#1a1d24" stroke="url(#manaticker-grad)" stroke-width="3"/>
+  <path d="M27,68 L27,32 L50,58 L73,32 L73,68 C76,67 78,65 82,61 L98,42"
+        fill="none" stroke="url(#manaticker-grad)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M98,42 L94,51 L90,47 Z" fill="url(#manaticker-grad)"/>
+</svg>
